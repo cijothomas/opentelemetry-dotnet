@@ -25,6 +25,7 @@ namespace OpenTelemetry.Tests
 {
     internal static class EventSourceTestHelper
     {
+        // Add test comment.
         public static void MethodsAreImplementedConsistentlyWithTheirAttributes(EventSource eventSource)
         {
             foreach (MethodInfo publicMethod in GetEventMethods(eventSource))
