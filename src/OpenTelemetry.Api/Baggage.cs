@@ -22,7 +22,7 @@ using OpenTelemetry.Context;
 namespace OpenTelemetry
 {
     /// <summary>
-    /// Baggage implementation. Thank you.
+    /// Baggage implementation. Thank you. Again.
     /// </summary>
     /// <remarks>
     /// Spec reference: <a href="https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/baggage/api.md">Baggage API</a>.
