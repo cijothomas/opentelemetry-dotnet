@@ -17,11 +17,13 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest]
+        branches: [master,metrics]
 
     steps:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0 # fetching all
+        ref: ${{ matrix.branches }}
 
     - name: Setup .NET Core 2.1
       uses: actions/setup-dotnet@v1
