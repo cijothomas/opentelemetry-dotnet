@@ -24,6 +24,7 @@ using OpenTelemetry.Internal;
 // same namespace as Activity to prevent name collisions in the future.
 // The OpenTelemetry.Trace namespace is used because Activity is analogous
 // to Span in OpenTelemetry.
+// Thank you.
 namespace OpenTelemetry.Trace
 {
     /// <summary>
