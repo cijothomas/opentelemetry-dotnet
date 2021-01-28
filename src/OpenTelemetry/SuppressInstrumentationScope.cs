@@ -86,18 +86,15 @@ namespace OpenTelemetry
             return value;
         }
 
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            if (!this.disposed)
-            {
-                Slot.Set(this.previousValue);
-                this.disposed = true;
-            }
-        }
-
+        /// <summary>
+        /// Enters suppression mode.
+        /// If suppression mode is enabled (slot is a negative integer), do nothing.
+        /// If suppression mode is not enabled (slot is zero), enter reference-counting suppression mode.
+        /// If suppression mode is enabled (slot is a positive integer), increment the ref count.
+        /// </summary>
+        /// <returns>The updated suppression slot value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static int IncrementIfTriggered()
+        public static int IncrementIfTriggered()
         {
             var value = Slot.Get();
 
@@ -109,8 +106,15 @@ namespace OpenTelemetry
             return value;
         }
 
+        /// <summary>
+        /// Leaves suppression mode.
+        /// If suppression mode is enabled (slot is a negative integer), do nothing.
+        /// If suppression mode is not enabled (slot is zero), enter reference-counting suppression mode.
+        /// If suppression mode is enabled (slot is a positive integer), increment the ref count.
+        /// </summary>
+        /// <returns>The updated suppression slot value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static int DecrementIfTriggered()
+        public static int DecrementIfTriggered()
         {
             var value = Slot.Get();
 
@@ -120,6 +124,16 @@ namespace OpenTelemetry
             }
 
             return value;
+        }
+
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            if (!this.disposed)
+            {
+                Slot.Set(this.previousValue);
+                this.disposed = true;
+            }
         }
     }
 }

@@ -36,7 +36,7 @@ namespace OpenTelemetry.Trace
     /// following this doc:
     /// https://github.com/dotnet/runtime/blob/master/src/libraries/System.Diagnostics.DiagnosticSource/src/ActivityUserGuide.md.
     /// </remarks>
-    internal class ActivitySourceAdapter
+    public class ActivitySourceAdapter
     {
         private static readonly Action<Activity, ActivityKind> SetKindProperty = CreateActivityKindSetter();
         private static readonly Action<Activity, ActivitySource> SetActivitySourceProperty = CreateActivitySourceSetter();
