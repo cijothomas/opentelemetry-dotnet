@@ -111,6 +111,15 @@ If releasing both, push both tags above.
    https://api.nuget.org/v3/index.json}
    ```
 
+   The following script may be used as a sample script to pick a subset of
+   packages (the artifacts from step8 has the entire packages):
+
+   ```powershell
+
+   get-childitem -Recurse | where {($_.extension -eq ".nupkg") -and ($_.name -like "*1.1.0-beta3*")} | foreach ($_) {.\nuget.exe push $_.fullname -Source
+   https://api.nuget.org/v3/index.json}
+   ```
+
 13.Packages would be available in nuget.org in few minutes.
    Validate that the package is uploaded.
 
