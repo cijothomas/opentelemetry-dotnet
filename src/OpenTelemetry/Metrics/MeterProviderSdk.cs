@@ -33,7 +33,7 @@ namespace OpenTelemetry.Metrics
         private readonly object collectLock = new object();
         private readonly MeterListener listener;
         private readonly List<MetricReader> metricReaders = new List<MetricReader>();
-        private int metricIndex = -1;
+        private readonly MetricPipeline pipeline;
 
         internal MeterProviderSdk(
             Resource resource,
@@ -44,17 +44,16 @@ namespace OpenTelemetry.Metrics
             this.Resource = resource;
             this.metrics = new Metric[MaxMetrics];
 
-            // TODO: Replace with single CompositeReader.
-            this.metricReaders.AddRange(metricReaders);
-            AggregationTemporality temporality = AggregationTemporality.Cumulative;
-
             // TODO: Actually support multiple readers.
             // Currently the last reader's temporality wins.
+            MetricPipeline pipeline = null;
             foreach (var reader in this.metricReaders)
             {
                 reader.SetParentProvider(this);
-                temporality = reader.GetAggregationTemporality();
+                pipeline = new MetricPipeline(reader);
             }
+
+            this.pipeline = pipeline;
 
             if (instrumentationFactories.Any())
             {
@@ -77,20 +76,13 @@ namespace OpenTelemetry.Metrics
                 {
                     if (meterSourcesToSubscribe.ContainsKey(instrument.Meter.Name))
                     {
-                        var index = Interlocked.Increment(ref this.metricIndex);
-                        if (index >= MaxMetrics)
-                        {
-                            // Log that all measurements are dropped from this instrument.
-                        }
-                        else
-                        {
-                            var metric = new Metric(instrument, temporality);
-                            this.metrics[index] = metric;
-                            listener.EnableMeasurementEvents(instrument, metric);
-                        }
+                        this.pipeline.InstrumentPublished(instrument, listener);
                     }
                 },
-                MeasurementsCompleted = (instrument, state) => this.MeasurementsCompleted(instrument, state),
+                MeasurementsCompleted = (instrument, state) =>
+                {
+                    this.MeasurementsCompleted(instrument, state);
+                },
             };
 
             // Everything double
@@ -115,67 +107,17 @@ namespace OpenTelemetry.Metrics
 
         internal void MeasurementRecordedDouble(Instrument instrument, double value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
-            // Get Instrument State
-            var metric = state as Metric;
-
-            if (instrument == null || metric == null)
-            {
-                // TODO: log
-                return;
-            }
-
-            metric.UpdateDouble(value, tagsRos);
+            this.pipeline.MeasurementRecordedDouble(instrument, value, tagsRos, state);
         }
 
         internal void MeasurementRecordedLong(Instrument instrument, long value, ReadOnlySpan<KeyValuePair<string, object>> tagsRos, object state)
         {
-            // Get Instrument State
-            var metric = state as Metric;
-
-            if (instrument == null || metric == null)
-            {
-                // TODO: log
-                return;
-            }
-
-            metric.UpdateLong(value, tagsRos);
+            this.pipeline.MeasurementRecordedLong(instrument, value, tagsRos, state);
         }
 
         internal IEnumerable<Metric> Collect()
         {
-            lock (this.collectLock)
-            {
-                try
-                {
-                    // Record all observable instruments
-                    this.listener.RecordObservableInstruments();
-                    var indexSnapShot = Math.Min(this.metricIndex, MaxMetrics - 1);
-                    for (int i = 0; i < indexSnapShot + 1; i++)
-                    {
-                        this.metrics[i].SnapShot();
-                    }
-
-                    return Iterate(this.metrics, indexSnapShot + 1);
-
-                    // We cannot simply return the internal structure (array)
-                    // as the user is not expected to navigate it.
-                    // properly.
-                    static IEnumerable<Metric> Iterate(Metric[] metrics, long targetCount)
-                    {
-                        for (int i = 0; i < targetCount; i++)
-                        {
-                            // Check if the Metric has valid
-                            // entries and skip, if not.
-                            yield return metrics[i];
-                        }
-                    }
-                }
-                catch (Exception)
-                {
-                    // TODO: Log
-                    return default;
-                }
-            }
+            return this.pipeline.Collect();
         }
 
         protected override void Dispose(bool disposing)
