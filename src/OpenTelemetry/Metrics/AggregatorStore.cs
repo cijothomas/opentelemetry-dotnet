@@ -31,8 +31,8 @@ namespace OpenTelemetry.Metrics
         private readonly int tagsKeysInterestingCount;
 
         // Two-Level lookup. TagKeys x [ TagValues x Metrics ]
-        private readonly ConcurrentDictionary<string[], Dictionary<object[], int>> keyValue2MetricAggs =
-            new ConcurrentDictionary<string[], Dictionary<object[], int>>(new StringArrayEqualityComparer());
+        private readonly ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>> keyValue2MetricAggs =
+            new ConcurrentDictionary<string[], ConcurrentDictionary<object[], int>>(new StringArrayEqualityComparer());
 
         private readonly AggregationTemporality temporality;
         private readonly bool outputDelta;
@@ -134,7 +134,7 @@ namespace OpenTelemetry.Metrics
                                 if (metricPoint.MetricPointStatus == MetricPointStatus.CandidateForRemoval)
                                 {
                                     var t = this.keyValue2MetricAggs[metricPoint.Keys];
-                                    t.Remove(metricPoint.Values);
+                                    t.TryRemove(metricPoint.Values, out _);
                                     metricPoint.MarkUnused();
                                 }
                             }
@@ -201,7 +201,7 @@ namespace OpenTelemetry.Metrics
                 seqKey = new string[length];
                 tagKeys.CopyTo(seqKey, 0);
 
-                value2metrics = new Dictionary<object[], int>(ObjectArrayComparer);
+                value2metrics = new ConcurrentDictionary<object[], int>(ObjectArrayComparer);
                 if (!this.keyValue2MetricAggs.TryAdd(seqKey, value2metrics))
                 {
                     this.keyValue2MetricAggs.TryGetValue(seqKey, out value2metrics);
@@ -248,7 +248,7 @@ namespace OpenTelemetry.Metrics
                             // Add to dictionary *after* initializing MetricPoint
                             // as other threads can start writing to the
                             // MetricPoint, if dictionary entry found.
-                            value2metrics.Add(seqVal, aggregatorIndex);
+                            value2metrics.TryAdd(seqVal, aggregatorIndex);
                         }
                     }
                 }
