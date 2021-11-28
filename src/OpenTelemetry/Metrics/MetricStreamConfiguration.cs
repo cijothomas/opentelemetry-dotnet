@@ -31,6 +31,7 @@ namespace OpenTelemetry.Metrics
     public class MetricStreamConfiguration
     {
         public static readonly MetricStreamConfiguration Drop = new DropConfiguration();
+        public static readonly MetricStreamConfiguration Default = new DefaultConfiguration();
 
         public string Name { get; set; }
 
@@ -47,6 +48,15 @@ namespace OpenTelemetry.Metrics
             internal override Aggregation Aggregation
             {
                 get => Aggregation.Drop;
+                set { }
+            }
+        }
+
+        private sealed class DefaultConfiguration : MetricStreamConfiguration
+        {
+            internal override Aggregation Aggregation
+            {
+                get => Aggregation.Default;
                 set { }
             }
         }
