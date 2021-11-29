@@ -121,7 +121,7 @@ namespace OpenTelemetry.Metrics
                     foreach (var viewConfig in this.viewConfigs)
                     {
                         var metricStreamConfig = viewConfig(instrument);
-                        if (metricStreamConfig != null)
+                        if (metricStreamConfig != MetricStreamConfiguration.Default)
                         {
                             metricStreamConfigs.Add(metricStreamConfig);
                         }
@@ -129,12 +129,12 @@ namespace OpenTelemetry.Metrics
 
                     if (metricStreamConfigs.Count == 0)
                     {
-                        // No views matched. Add null
-                        // which will apply defaults.
+                        // No views matched. Add MetricStreamConfiguration.Default
+                        // to apply defaults.
                         // Users can turn off this default
                         // by adding a view like below as the last view.
                         // .AddView(instrumentName: "*", MetricStreamConfiguration.Drop)
-                        metricStreamConfigs.Add(null);
+                        metricStreamConfigs.Add(MetricStreamConfiguration.Default);
                     }
 
                     if (this.reader != null)
