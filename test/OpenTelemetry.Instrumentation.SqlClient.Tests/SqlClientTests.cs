@@ -38,7 +38,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         private const string SqlConnectionStringEnvVarName = "OTEL_SQLCONNECTIONSTRING";
         private const string TestConnectionString = "Data Source=(localdb)\\MSSQLLocalDB;Database=master";
 
-        private static readonly string SqlConnectionString = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(SqlConnectionStringEnvVarName);
+        private static readonly string SqlConnectionString = "Data Source=127.0.0.1,5433; User ID=sa; Password=Pass@word";
 
         private readonly FakeSqlClientDiagnosticSource fakeSqlClientDiagnosticSource;
 
@@ -82,7 +82,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         }
 
         [Trait("CategoryName", "SqlIntegrationTests")]
-        [SkipUnlessEnvVarFoundTheory(SqlConnectionStringEnvVarName)]
+        [Theory]
         [InlineData(CommandType.Text, "select 1/1", false)]
         [InlineData(CommandType.Text, "select 1/1", false, true)]
         [InlineData(CommandType.Text, "select 1/0", false, false, true)]
@@ -90,7 +90,7 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
         [InlineData(CommandType.Text, "select 1/0", false, false, true, true, false)]
         [InlineData(CommandType.StoredProcedure, "sp_who", false)]
         [InlineData(CommandType.StoredProcedure, "sp_who", true)]
-        public void SuccessfulCommandTest(
+        public async void SuccessfulCommandTest(
             CommandType commandType,
             string commandText,
             bool captureStoredProcedureCommandName,
@@ -139,13 +139,24 @@ namespace OpenTelemetry.Instrumentation.SqlClient.Tests
                 CommandType = commandType,
             };
 
+            Assert.Null(Activity.Current);
+            var act = new Activity("test");
             try
             {
-                sqlCommand.ExecuteNonQuery();
+                act.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+                act.Start();
+                var res =  sqlCommand.ExecuteNonQueryAsync().Result;
             }
             catch
             {
             }
+            finally
+            {
+                act.Stop();
+            }
+
+
+            Assert.Null(Activity.Current);
 
             Assert.Single(activities);
             var activity = activities[0];
