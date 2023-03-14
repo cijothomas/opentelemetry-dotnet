@@ -117,10 +117,15 @@ appBuilder.Services.AddOpenTelemetry()
                 builder.AddPrometheusExporter();
                 break;
             case "otlp":
-                builder.AddOtlpExporter(otlpOptions =>
+                builder.AddOtlpExporter((exporterOptions, metricReaderOptions) =>
                 {
                     // Use IConfiguration directly for Otlp exporter endpoint option.
-                    otlpOptions.Endpoint = new Uri(appBuilder.Configuration.GetValue<string>("Otlp:Endpoint"));
+                    exporterOptions.Endpoint = new Uri(appBuilder.Configuration.GetValue<string>("Otlp:Endpoint"));
+                    metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
+                    metricReaderOptions.PeriodicExportingMetricReaderOptions = new PeriodicExportingMetricReaderOptions
+                    {
+                        ExportIntervalMilliseconds = 20000,
+                    };
                 });
                 break;
             default:
@@ -170,7 +175,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
