@@ -16,6 +16,7 @@
 
 using Examples.AspNetCore;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Exporter.Geneva;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -95,7 +96,11 @@ appBuilder.Services.AddOpenTelemetry()
                 break;
 
             default:
-                builder.AddConsoleExporter();
+                builder.AddGenevaTraceExporter(options =>
+                {
+                    options.ConnectionString = "EtwSession=OpenTelemetry";
+                });
+
                 break;
         }
     })
@@ -124,9 +129,10 @@ appBuilder.Services.AddOpenTelemetry()
                     metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
                     metricReaderOptions.PeriodicExportingMetricReaderOptions = new PeriodicExportingMetricReaderOptions
                     {
-                        ExportIntervalMilliseconds = 20000,
+                        ExportIntervalMilliseconds = 60000,
                     };
                 });
+                builder.AddGenevaMetricExporter(options => options.ConnectionString = "Account=exemplardemo;Namespace=common");
                 break;
             default:
                 builder.AddConsoleExporter();
@@ -156,7 +162,10 @@ appBuilder.Logging.AddOpenTelemetry(options =>
             });
             break;
         default:
-            options.AddConsoleExporter();
+            options.AddGenevaLogExporter(options =>
+                {
+                    options.ConnectionString = "EtwSession=OpenTelemetry";
+                });
             break;
     }
 });
