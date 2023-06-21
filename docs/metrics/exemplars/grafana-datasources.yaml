@@ -16,6 +16,8 @@ datasources:
     exemplarTraceIdDestinations:
     - name: trace_id
       datasourceUid: Tempo
+    - name: trace_id
+      datasourceUid: Loki
 - name: Tempo
   type: tempo
   access: proxy
@@ -31,3 +33,11 @@ datasources:
     httpMethod: GET
     serviceMap:
       datasourceUid: prometheus
+- name: Loki
+  type: loki
+  access: proxy
+  orgId: 1
+  url: http://loki:3100
+  basicAuth: false
+  version: 1
+  editable: false
