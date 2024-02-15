@@ -1,11 +1,13 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 
 var loggerFactory = LoggerFactory.Create(builder =>
 {
+    builder.Services.AddLogEnricher(new CustomLogEnricher());
     builder.AddOpenTelemetry(logging =>
     {
         logging.AddConsoleExporter();
